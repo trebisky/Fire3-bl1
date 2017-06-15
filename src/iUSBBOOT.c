@@ -476,7 +476,7 @@ static void header_check(USBBOOTSTATUS *pUSBBootStatus,
 		pUSBBootStatus->RxBuffAddr =
 			(U8 *)((U8 *)(tbi->loadaddr) + sizeof(*tbi));
 		pUSBBootStatus->RxBuffAddr_save = pUSBBootStatus->RxBuffAddr;
-		pUSBBootStatus->iRxSize = 512 +	/* rsa header */
+		pUSBBootStatus->iRxSize = //512 +	/* rsa header */
 			tbi->loadsize +
 			tbi->dbi[0].usbbi.split_size +
 			tbi->dbi[1].usbbi.split_size;
@@ -828,6 +828,7 @@ void udelay(U32 utime)
 			;
 }
 
+#if 0
 /* Copy memory to memory */
 static void memcpy(void *dst, const void *src, uint32_t cnt)
 {
@@ -872,6 +873,7 @@ void post_process(USBBOOTSTATUS *pUSBBootStatus,
 	       next,
 	       tbi->dbi[1].usbbi.split_size);
 }
+#endif
 
 
 CBOOL iUSBBOOT(struct NX_SecondBootInfo *pTBI)
@@ -964,7 +966,7 @@ CBOOL iUSBBOOT(struct NX_SecondBootInfo *pTBI)
 	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CTRUE); // reset on
 
 	/* post process */
-	post_process(pUSBBootStatus, pTBI);
+	//post_process(pUSBBootStatus, pTBI);
 
 	SYSMSG("\r\n\nusb image download is done!\r\n\n");
 

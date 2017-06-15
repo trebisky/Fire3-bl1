@@ -23,9 +23,7 @@ ENTRY(Startup)
 
 SECTIONS
 {
-	. = 0x00000000FFFF0200;
-	. = ALIGN(4);
-	.text :
+	.text 0x00000000FFFF0000 :
 	{
 		obj/startup_aarch64.o	(.text)
 		*(.text)
@@ -42,7 +40,7 @@ SECTIONS
 
 	_end = .;
 
-	. = ALIGN(8);
+	. = ALIGN(64); /* need 8, use 64 for even calculation of image size in NSIH header */
 	__bss_start__ = .;
 	.bss_start (OVERLAY) : {
 		KEEP(*(.__bss_start));

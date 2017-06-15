@@ -72,6 +72,7 @@ void dowakeup(void)
 		}
 	} else if (ATF_SUSPEND_SIGNATURE == (atf_signature & 0xFFFFFF00)) {
 		/* Arm Trusted Firmware */
+#if 0
 		struct nx_tbbinfo *header = (struct nx_tbbinfo*)ReadIO32(&pReg_Alive->ALIVESCRATCHVALUE2);
 		cal_crc = __calc_crc((void *)((MPTRS)(header->loadaddr + ATF_HEADER_SIZE)), header->loadsize - ATF_HEADER_SIZE);
 		printf("Calcurated CRC: 0x%08X, Normal CRC: 0x%08X \r\n", cal_crc, header->crc32);
@@ -89,6 +90,7 @@ void dowakeup(void)
 		WriteIO32(&pReg_Alive->ALIVESCRATCHRST4, 0xFFFFFFFF);
 //		WriteIO32(&pReg_Alive->ALIVESCRATCHRST2, 0xFFFFFFFF);
 		printf("CRC check failed. Go to COLD BOOT.\r\n");
+#endif
 	} else {
 		printf("General Suspend Signature is different.\r\nRead Signature :0x%08X\r\n", signature);
 	}

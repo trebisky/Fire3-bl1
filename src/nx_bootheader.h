@@ -212,12 +212,20 @@ struct nx_tbbinfo {
 	uint32_t vector[8];			/* 0x000 ~ 0x01f */
 	uint32_t vector_rel[8];			/* 0x020 ~ 0x03f */
 
+#if 1
+    uint32_t devreadaddr;
+    uint32_t loadsize;
+    uint32_t loadaddr;
+    uint32_t startaddr;
+    uint32_t _reserved0[6];
+#else
 	uint32_t _reserved0[4];			/* 0x040 ~ 0x04f */
 
 	uint32_t loadsize;			/* 0x050 */
 	uint32_t crc32;				/* 0x054 */
 	uint64_t loadaddr;			/* 0x058 ~ 0x05f */
 	uint64_t startaddr;			/* 0x060 ~ 0x067 */
+#endif
 
 	uint8_t unified;			/* 0x068 */
 	uint8_t bootdev;			/* 0x069 */
@@ -260,6 +268,6 @@ struct asymmetrickey {
 
 struct nx_bootheader {
 	struct nx_tbbinfo tbbi;
-	struct asymmetrickey rsa_public;
+//	struct asymmetrickey rsa_public;
 };
 #endif

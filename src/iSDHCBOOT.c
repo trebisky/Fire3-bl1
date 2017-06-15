@@ -1052,7 +1052,7 @@ static	CBOOL	SDMMCBOOT(SDXCBOOTSTATUS * pSDXCBootStatus,
 	}
 
 	result = NX_SDMMC_ReadSectors(pSDXCBootStatus,
-			pSBI->DEVICEADDR/BLOCK_LENGTH, 2, (U32 *)pTBI );
+			pSBI->DEVICEADDR/BLOCK_LENGTH, 1, (U32 *)pTBI );
 #if 0
 	do {
 	U32 i;
@@ -1123,9 +1123,9 @@ static	CBOOL	SDMMCBOOT(SDXCBOOTSTATUS * pSDXCBootStatus,
 			(uint32_t)ptbh->tbbi.startaddr);
 
 	result = NX_SDMMC_ReadSectors(pSDXCBootStatus,
-			pSBI->DEVICEADDR / BLOCK_LENGTH + 2,
+			pSBI->DEVICEADDR / BLOCK_LENGTH + 1,
 			(ptbh->tbbi.loadsize + BLOCK_LENGTH - 1) / BLOCK_LENGTH,
-			(U32 *)((MPTRS)(ptbh->tbbi.loadaddr + BLOCK_LENGTH * 2)));
+			(U32 *)((MPTRS)(ptbh->tbbi.loadaddr + BLOCK_LENGTH)));
 	//pTBI->LAUNCHADDR = ptbh->tbbi.startaddr;	/* for old style boot */
 
 	if (pReg_ClkPwr->SYSRSTCONFIG & 1<<14)

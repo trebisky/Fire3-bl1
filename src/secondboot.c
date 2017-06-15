@@ -388,7 +388,7 @@ void BootMain(U32 CPUID)
 #endif
 	if (Result) {
 		struct nx_tbbinfo *tbi = (struct nx_tbbinfo *)&TBI;
-		void (*pLaunch)() = (void (*)())(tbi->startaddr);
+		void (*pLaunch)() = (void (*)())((long)tbi->startaddr);
 
 		SYSMSG(" Image Loading Done!\r\n");
 		SYSMSG("Launch to 0x%08X\r\n", (MPTRS)pLaunch);

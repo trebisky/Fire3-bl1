@@ -46,12 +46,12 @@ GetCurrentSMode:
 	.global GetCPUID
 //; unsigned int GetCPUID(void);
 GetCPUID:
-	mrs     x0, MPIDR_EL1			//; Get our cpu id
-	and     x1, x0, #0x3			//; cpu id
-	lsr     x0, x0, #8
-	and     x0, x0, #0x0F			//; check processor affinity
-	orr     x0, x1, x0			//; mark cpu group 0 or 1
-	ret
+	mrs     x1, MPIDR_EL1			//; Get our cpu id
+	and     x0, x1, #0x3			//; cpu id
+    tst     x1, 0xff00
+    beq     1f
+    orr     x0, x0, 4
+1:  ret
 
 	.global GetSCR_EL3
 //; unsigned int GetSCR_EL3(void);

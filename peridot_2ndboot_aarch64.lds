@@ -40,7 +40,7 @@ SECTIONS
 
 	_end = .;
 
-	. = ALIGN(64); /* need 8, use 64 for even calculation of image size in NSIH header */
+	. = ALIGN(16); /* need 8, use 16 for even calculation of image size in NSIH header */
 	__bss_start__ = .;
 	.bss_start (OVERLAY) : {
 		KEEP(*(.__bss_start));

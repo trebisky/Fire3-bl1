@@ -141,9 +141,10 @@ CBOOL DebugInit( U32 port )
 
 void	DebugPutch( S8 ch )
 {
-	const U32 TX_FIFO_FULL	= 1<<24;
-	while( pReg_Uart->FSTATUS & TX_FIFO_FULL )	{ ; }
+	const U32 TX_FIFO_NONEMPTY	= 0x1ff0000;
+	while( pReg_Uart->FSTATUS & TX_FIFO_NONEMPTY )	{ ; }
 	pReg_Uart->THR = (U32)ch;
+	while( pReg_Uart->FSTATUS & TX_FIFO_NONEMPTY )	{ ; }
 }
 
 CBOOL	DebugIsUartTxDone(void)

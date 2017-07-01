@@ -111,6 +111,7 @@ void SubCPUBoot(U32 CPUID)
 #endif
 	do {
 		register void (*pLaunch)(void);
+        asm volatile("msr daifclr, 0x2");
 		__asm__ __volatile__("wfi");
 
 		//        WriteIO32(&pReg_GIC400->GICD.ICPENDR[0], 1<<CPUID);
@@ -181,3 +182,15 @@ CBOOL SubCPUBringUp(U32 CPUID)
 	printf("CPU%d is Master!\r\n\n", CPUID);
 	return result;
 }
+
+void SubCPUJumpTo(U32 cpuId, unsigned jumpAddr)
+{
+	struct NX_SubCPUBringUpInfo *pCPUStartInfo =
+	    (struct NX_SubCPUBringUpInfo *)CPU_ALIVE_FLAG_ADDR;
+
+    pCPUStartInfo->JumpAddr = jumpAddr;
+    pCPUStartInfo->CPUID = cpuId;
+    // raise interrupt
+    WriteIO32(&pReg_GIC400->GICD.SGIR, 1 << (cpuId+16) | 0x8001);
+}
+

@@ -389,8 +389,12 @@ void BootMain(U32 CPUID)
 	if (Result) {
 		struct nx_tbbinfo *tbi = (struct nx_tbbinfo *)&TBI;
 		void (*pLaunch)() = (void (*)())((long)tbi->startaddr);
+        void SwitchToEL2(void);
 
 		SYSMSG(" Image Loading Done!\r\n");
+#ifdef aarch64
+	    SwitchToEL2();
+#endif
 		SYSMSG("Launch to 0x%08X\r\n", (MPTRS)pLaunch);
 		temp = 0x10000000;
 

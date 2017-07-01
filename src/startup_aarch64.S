@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "nx_peridot.h"
-#include "cfgBootDefine.h"
 
 #include "aarch64_Vectors.inc"
 
@@ -39,12 +38,11 @@
     .word 0xE320F003	// 0x038 : WFI				// core 0 will be reset when wfi
     .word 0xEAFFFFFE	// 0x03C : B .
     .word 0x00008000	// 0x040 : Device Read Address from 2ndboot Device.
-    //.word 0x00040000	// 0x044 : Load Size for 2ndboot.
-    .word __bss_start__ - 0xffff0200
+    .word 0x00040000	// 0x044 : Load Size for 2ndboot.
     .word 0xFFFF0000	// 0x048 : Load Address for 2ndboot.
     .word 0xFFFF0000	// 0x04C : Launch Address for 2ndboot.
     .word 0x00000000	// 0x050	[7:0] - Channel number
-    .word 0x03000000	// 0x054	Boot From SDMMC	[31:24] - 0: USB, 1: SPI, 2: NAND, 3:SDMMC, 4: SDFS
+    .word 0x00000000	// 0x054	Boot From SDMMC	[31:24] - 0: USB, 1: SPI, 2: NAND, 3:SDMMC, 4: SDFS
     .word 0x00000000	// 0x058
     .word 0x100CC801	// 0x05C : PLL0		800MHz	P:3	M:200	S:1
     .word 0x100CC801	// 0x060 : PLL1		800MHz	P:3	M:200	S:1
@@ -93,23 +91,13 @@
 .global Startup
 Startup:
         msr     DAIFSet, #(I_Bit|F_Bit|A_Bit)        //; disable interrupt & fast interrupt and Abort
-
         bl      GetCPUID
         mov     x29, x0
-
         bl      remap_vectors
-
-        ands    x0, x0, #3
+        ands    x0, x0, #7
         b.ne    CPUBRINGUP
-
-
         b       Reset_Handler
-        b       .
-.global Sleep
-Sleep:
-        SMC     12345
-
-BuildInfo:
+//BuildInfo:
         .word   0x68180306      //; 24, Chip name - 6818, Build num - v0.3.06
 
 Reset_Handler:
@@ -288,70 +276,93 @@ postloop:
 
         .ltorg
 
-//.global sync_asm_handler_EL3
-        .align 4
-.global synchrorous_vector_jump
-synchrorous_vector_jump:
-        adr     x0, sync_vector_value
-        ldr     w0, [x0]
-        br      x0
-sync_vector_value:
-        .long    sync_asm_handler_EL3
-
-.global    remap_vectors
-// void remap_vectors(U32 cpuid, U32 *synchrorous_vector_jump, void temp, U32 *__bss_end__);
 remap_vectors:
-        ldr     x3, =__bss_end__
-        add     x3, x3, #0x7FF
-        bic     x3, x3, #0x7FF
-
-        cmp     x0, xzr
-        b.ne    2f
-
-        ldr     x1, =synchrorous_vector_jump
-        ldr     x2, [x1], #8
-//;        str     x2, [x3, #0x000]                    //; current Exception level with SP_EL0
-        str     x2, [x3, #0x200]                    //; current Exception level with SP_ELx, x>0
-        str     x2, [x3, #0x400]                    //; Lower Exception level with aarch64
-        str     x2, [x3, #0x600]                    //; Lower Exception level with aarch32
-        ldr     x2, [x1], #8
-//;        str     x2, [x3, #0x008]                    //; current Exception level with SP_EL0
-        str     x2, [x3, #0x208]                    //; current Exception level with SP_ELx, x>0
-        str     x2, [x3, #0x408]                    //; Lower Exception level with aarch64
-        str     x2, [x3, #0x608]                    //; Lower Exception level with aarch32
-
-2:
+        adr     x3, vectors_el3
         msr     VBAR_EL3, x3                        //; reset exception vector
-
         ret
 
-        .ltorg
-//==================================================================
-// Exception Handler entry
-//==================================================================
-    .align 3
-    .global sync_asm_handler_EL3
-sync_asm_handler_EL3:
-        PUSH_HANDLER_FRAME
-//;        b        .
-        bl      sync_c_handler_EL3
-        POP_HANDLER_FRAME
-        msr     elr_el3, x30                        //; lr
-        eret
+.Lpanic:
+    stp     x27, x28, [sp, -16]!
+    stp     x25, x26, [sp, -16]!
+    stp     x23, x24, [sp, -16]!
+    stp     x21, x22, [sp, -16]!
+    stp     x19, x20, [sp, -16]!
+    stp     x17, x18, [sp, -16]!
+    stp     x15, x16, [sp, -16]!
+    stp     x13, x14, [sp, -16]!
+    stp     x11, x12, [sp, -16]!
+    stp     x9,  x10, [sp, -16]!
+    stp     x7,  x8,  [sp, -16]!
+    stp     x5,  x6,  [sp, -16]!
+    stp     x3,  x4,  [sp, -16]!
+    stp     x1,  x2,  [sp, -16]!
+    stp     xzr, x0,  [sp, -16]!
+    mrs		x1, currentEl
+    ubfx	x1, x1, 2, 2
+    cmp		x1, 3
+    b.eq    3f
+    cmp		x1, 2
+    b.eq    2f
+    mrs		x1, esr_el1
+    b       1f
+3:  mrs     x1, esr_el3
+    b       1f
+2:  mrs     x1, esr_el2
+1:  mov     x0, x29
+    add     x2, sp, 8
+    bl      sync_c_handler_EL3
+    ldp     xzr, x0,  [sp], 16
+    ldp     x1,  x2,  [sp], 16
+    ldp     x3,  x4,  [sp], 16
+    ldp     x5,  x6,  [sp], 16
+    ldp     x7,  x8,  [sp], 16
+    ldp     x9,  x10, [sp], 16
+    ldp     x11, x12, [sp], 16
+    ldp     x13, x14, [sp], 16
+    ldp     x15, x16, [sp], 16
+    ldp     x17, x18, [sp], 16
+    ldp     x19, x20, [sp], 16
+    ldp     x21, x22, [sp], 16
+    ldp     x23, x24, [sp], 16
+    ldp     x25, x26, [sp], 16
+    ldp     x27, x28, [sp], 16
+    ldp     x29, x30, [sp], 16
+    eret
 
+.macro panic
+	.align	7
+1:  stp     x29, x30, [sp, -16]!
+    mov     x29, 1b - vectors_el3
+    b .Lpanic
+    ldp     x29, x30, [sp], 16
+    eret
+.endm
 
-.global ExceptionTest
-.global Startup_EL1
-Startup_EL1:
-        mov     x0, 0xffffff00
-        mov     sp, x0
+	.text
+	.align 11
+vectors_el3:
+    panic /* 0x000 Current EL Synchronous Thread */
+    panic /* 0x080 Current EL IRQ Thread */
+	panic /* 0x100 Current EL FIQ Thread */
+	panic /* 0x180 Current EL Error Thread */
+	panic /* 0x200 Current EL Synchronous Handler */
+	panic /* 0x280 Current EL IRQ Handler */
+	panic /* 0x300 Current EL FIQ Handler */
+	panic /* 0x380 Current EL Error Handler */
+	panic /* 0x400 */
+    panic /* 0x480 */
+    panic /* 0x500 */
+    panic /* 0x580 */
+    panic /* 0x600 */
+    panic /* 0x680 */
+    panic /* 0x700 */
+    panic /* 0x780 */
 
-//        mrs     x0, CPACR_EL1                       //; printf use fpu, neon register. so for test, exception trap must be disabled.
-//        orr     x0, x0, #(3<<20)                    //; access fpu is not traped EL0, EL1
-//        msr     CPACR_EL1, x0
+do_reset:
+    ldr w0, =0xc0010224
+    mov w1, #0x08
+    str w1, [x0]
+    mov w1, #0x1000
+    str w1, [x0, 4]
+1:  b 1b
 
-//        b       ExceptionTest
-
-//;==================================================================
-//; End of startup.s
-//;==================================================================

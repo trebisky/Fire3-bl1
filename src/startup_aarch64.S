@@ -42,7 +42,7 @@
     .word 0xFFFF0000	// 0x048 : Load Address for 2ndboot.
     .word 0xFFFF0000	// 0x04C : Launch Address for 2ndboot.
     .word 0x00000000	// 0x050	[7:0] - Channel number
-    .word 0x00000000	// 0x054	Boot From SDMMC	[31:24] - 0: USB, 1: SPI, 2: NAND, 3:SDMMC, 4: SDFS
+    .word 0x03000000	// 0x054	Boot From SDMMC	[31:24] - 0: USB, 1: SPI, 2: NAND, 3:SDMMC, 4: SDFS
     .word 0x00000000	// 0x058
     .word 0x100CC801	// 0x05C : PLL0		800MHz	P:3	M:200	S:1
     .word 0x100CC801	// 0x060 : PLL1		800MHz	P:3	M:200	S:1

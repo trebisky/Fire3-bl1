@@ -19,8 +19,64 @@
 #include "cfgBootDefine.h"
 
 
-        .align 8
-	.skip 0x200, 0x00
+    // see reference-nsih/drone-sd-32.txt
+    ldr   pc, 1f        // 0x000 : MOV PC, ResetV
+    ldr   pc, 2f    	// 0x004 : MOV PC, UndefV
+    ldr   pc, 3f    	// 0x008 : MOV PC, SWIV
+    ldr   pc, 4f    	// 0x00C : MOV PC, PAbortV
+    ldr   pc, 5f    	// 0x010 : MOV PC, DAbortV
+    ldr   pc, 6f    	// 0x014 : MOV PC, NotUsed
+    ldr   pc, 7f    	// 0x018 : MOV PC, IRQV
+    ldr   pc, 8f    	// 0x01C : MOV PC, FIQV
+1:  .word ResetV	    // 0x020 : ResetV
+2:  .word UndefV	    // 0x024 : UndefV
+3:  .word SWIV	        // 0x028 : SWIV
+4:  .word PAbortV	    // 0x02C : PAbortV
+5:  .word DAbortV	    // 0x030 : DAbortV
+6:  .word NotUsed	    // 0x034 : NotUsed
+7:  .word IRQV	        // 0x038 : IRQV
+8:  .word FIQV	        // 0x03C : FIQ + Headereset when wfi
+    .word 0x00008000	// 0x040 : Device Read Address from 2ndboot Device.
+    .word 0x00040000	// 0x044 : Load Size for 2ndboot.
+    .word 0xFFFF0000	// 0x048 : Load Address for 2ndboot.
+    .word 0xFFFF0000	// 0x04C : Launch Address for 2ndboot.
+    .word 0x00000000	// 0x050	[7:0] - Channel number
+    .word 0x03000000	// 0x054	Boot From SDMMC	[31:24] - 0: USB, 1: SPI, 2: NAND, 3:SDMMC, 4: SDFS
+    .word 0x00000000	// 0x058
+    .word 0x100CC801	// 0x05C : PLL0		800MHz	P:3	M:200	S:1
+    .word 0x100CC801	// 0x060 : PLL1		800MHz	P:3	M:200	S:1
+    .word 0x50086601	// 0x064 : PLL2		614.4MHz	P:2	M:102	S:1	K:26214
+    .word 0x100CC801	// 0x068 : PLL3		800MHz	P:3	M:200	S:1	K:0
+    .word 0x66660104	// 0x06C : PLL2 SPREAD
+    .word 0x00000104	// 0x070 : PLL3 SPREAD
+    .word 0x00000601	// 0x074 : CPU G0	PLL1	/FCLK:800	/HCLK:200
+    .word 0x00000208	// 0x078 : BUS		PLL0	/BCLK:400	/PCLK:200
+    .word 0x00208003	// 0x07C : MEM		PLL3	/MDCLK:800	/MCLK:800	/MBCLK:400	/MPCLK:200
+    .word 0x00000208	// 0x080 : GR3D		PLL0	/GR3DBCLK:400
+    .word 0x00000208	// 0x084 : MPEG		PLL0	/MPEGBCLK:400	/MPEGPCLK:200
+    .word 0x00000208	// 0x088 : DISP		PLL0	/DISPBCLK:400	/DISPPCLK:200
+    .word 0x00000038	// 0x08C : HDMI		PLL0	/HDMIPCLK:100
+    .word 0x00000601	// 0x090 : CPU G1	PLL1	/FCLK:800	/HCLK:200
+    .word 0x00000208	// 0x094 : CCI4		PLL0	/CCI4BCLK:400	/CCI4PCLK:200
+    .word 0x03100301	// 0x098	/Chip Num:1	/Chip Row:15	/Bus Width:16	/Chip Col:10
+    .word 0x004007C0	// 0x09C	512MB x 2ea (16bit) x 1CS
+    .word 0x06000B08	// 0x0A0	/CWL:8	/CL:11	/MR1_AL:0	/MR0_WR:6
+    .word 0x0C0C0C0C	// 0x0A4
+    .word 0x04040404	// 0x0A8
+    .word 0x0000401B	// 0x0AC	/tPZQ:16411
+    .word 0x00620618	// 0x0B0	/Refresh Interval:7.8us
+    .word 0x6836650E	// 0x0B4	/tRFC:104	/tRRD:3	/tRP:6	/tRCD:6	/tRC:20	/tRAS:14
+    .word 0x3630580B	// 0x0B8	/tWTR:3	/tWR:6	/tRTP:3
+    .word 0x41000A26	// 0x0BC	/tFAW:16	/tXSR:256	/tXP:10	/tCKE:2
+    .word 0x00020102	// 0x0C0	[23:16] MR1_RTT_Nom - 001: RZQ/4, 010: RZQ/2, 011: RZQ/6, 100: RZQ/12, 101: RZQ/8, [15:0] MR1_ODS - 0: RZQ/6, 1 : RZQ/7, [7:0] MR2_RTT_WR - 0: ODT disable, 1: RZQ/4, 2: RZQ/2
+    .word 0x06060606	// 0x0C4	[31:24] Byte3, [23:16] Byte2, [15:8] Byte1, [7:0] Byte0 - 240ohm / (n + 1), n = (1 ~ 7)
+    .word 0x06060606	// 0x0C8	[31:24] CA, [23:16] CS, [15:8] CKE, [7:0] CK - 240ohm / (n + 1), n = (1 ~ 7)
+    .word 0x00000104	// 0x0CC	[15:8] ZQ_ODT, [7:0] ZQ_DDS - 240ohm / (n + 1), n = (1 ~ 7)
+    .word 0x00000004	// 0x0D0	WR_CAL[4], RD_CAL[3], GT_LVL[2], CA_CAL[1], WR_LVL[0]
+	.skip 0x124
+    .word 0x68180300	// 0x1F8, BuildInfo
+    .word 0x4849534E	// 0x1FC	"NSIH"
+
 /*
  * start and end of BSS
  */
@@ -39,14 +95,14 @@
 //;==================================================================
 .global Vectors
 Vectors:
-        b       Reset_Handler   //; 00 - Reset
-        b       .               //; 04 - Undefined instructions
-        b       .               //; 08 - SWI instructions
-        b       .               //; 0C - Instruction fetch aborts
-        b       .               //; 10 - Data access aborts
-        b       .               //; 14 - Reserved (was address exception)
-        b       .               //; 18 - IRQ interrupts
-        b       .               //; 1C - FIQ interrupts
+ResetV:  b       Reset_Handler
+UndefV:  b       undef_instr_handler
+SWIV:    b       smc_handler
+PAbortV: b       prefetch_abort_handler
+DAbortV: b       data_abort_handler
+NotUsed: b       hyp_trap_handler
+IRQV:    b       irq_handler
+FIQV:    b       fiq_handler
 .global Sleep
 Sleep:
         b       SystemSleep     //; 20
@@ -158,8 +214,10 @@ CPUBRINGUP:
         and     r2, r2, #0x7                        // cpu 0: -0xE0, cpu 1: -0, cpu 2: -0x20,  3: -0x40, 4: -0x60, 5: -0x80, 6: -0xA0, 7: -0xC0
         mul     r1, r1, r2
         sub     r0, r0, r1
-
         mov     sp, r0
+
+        adr r0, Vectors
+        mcr p15, 0, r0, c12, c0, 0                  // set vbar
 
         movs    r0, r12
 

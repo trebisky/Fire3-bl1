@@ -2,7 +2,15 @@
 #include <nx_alive.h>
 #include <nx_clkpwr.h>
 
-void boardReset(void);
+
+void boardReset(void)
+{
+    printf("\r\nBoard reset.\r\n");
+    WriteIO32(0xc0010224, 0x8);
+    WriteIO32(0xc0010228, 0x1000);
+    while( 1 );
+}
+
 
 enum PsciErrorCodes {
     PSCI_SUCCESS            =  0,

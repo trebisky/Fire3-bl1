@@ -21,14 +21,7 @@
 U32 GetCurrentSMode(void);
 U32 GetCPUID(void);
 void psciHandler(unsigned long*);
-
-void boardReset(void)
-{
-    printf("\r\nBoard reset.\r\n");
-    WriteIO32(0xc0010224, 0x8);
-    WriteIO32(0xc0010228, 0x1000);
-    while( 1 );
-}
+void boardReset(void);
 
 void sync_c_handler_EL3(unsigned exc, unsigned esr, unsigned long *regs)
 {

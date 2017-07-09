@@ -22,7 +22,7 @@ ENTRY(Vectors)
 
 SECTIONS
 {
-	. = 0xFFFF0200;
+	. = 0xFFFF0000;
 	. = ALIGN(4);
 	.text :
 	{

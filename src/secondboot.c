@@ -274,6 +274,20 @@ void BootMain(U32 CPUID)
 	printClkInfo();
 
 	SYSMSG("\r\nDDR3 POR Init Start %d\r\n", isResume);
+#if 0
+	if( (pSBI->DII.WRITEDELAY & 0xff) == 0 ) {
+		void udelay(U32);
+		SetIO32(&pReg_GPIO[GPIO_GROUP_E]->GPIOx_PULLENB, 1<<12);
+		SetIO32(&pReg_GPIO[GPIO_GROUP_E]->GPIOx_PULLSEL_DISABLE_DEFAULT, 1<<12);
+		SetIO32(&pReg_GPIO[GPIO_GROUP_E]->GPIOx_PULLENB_DISABLE_DEFAULT, 1<<12);
+		udelay(0x4000);
+		if( (ReadIO32(&pReg_GPIO[GPIO_GROUP_E]->GPIOxPAD) &  1<<12) == 0 ) {
+			pSBI->DII.WRITEDELAY |= 1;
+		}else{
+			pSBI->DII.WRITEDELAY |= 2;
+		}
+	}
+#endif
 #ifdef MEM_TYPE_DDR3
 #if 0
 	if (init_DDR3(isResume) == CFALSE)
@@ -316,7 +330,9 @@ void BootMain(U32 CPUID)
 	initCCI400();
 #endif
 
+#ifdef aarch64
 	SetSecureState();
+#endif
 
 	SYSMSG("Wakeup CPU ");
 

@@ -98,7 +98,12 @@ void SubCPUBoot(U32 CPUID)
 	register struct NX_SubCPUBringUpInfo *pCPUStartInfo =
 	    (struct NX_SubCPUBringUpInfo *)CPU_ALIVE_FLAG_ADDR;
 
+#ifdef aarch64
 	SetGIC_All();
+#else
+	WriteIO32( &pReg_GIC400->GICC.CTLR, 0x7 );
+	WriteIO32( &pReg_GIC400->GICC.PMR, 0xff );
+#endif
 	WriteIO32(&pReg_GIC400->GICD.ISENABLER[0], 0xFF); // enable sgi all
 	WriteIO32(&pReg_ClkPwr->CPUPOWERONREQ,
 		  0x00); // clear own wakeup req bit
@@ -111,7 +116,9 @@ void SubCPUBoot(U32 CPUID)
 #endif
 	do {
 		register void (*pLaunch)(void);
+#ifdef aarch64
         asm volatile("msr daifclr, 0x2");
+#endif
 		__asm__ __volatile__("wfi");
 
 		//        WriteIO32(&pReg_GIC400->GICD.ICPENDR[0], 1<<CPUID);

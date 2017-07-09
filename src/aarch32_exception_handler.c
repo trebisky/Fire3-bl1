@@ -18,38 +18,50 @@
 
 #include "sysheader.h"
 
-void sleepMain(void);
 U32 GetCPUID(void);
 U32 GetSMCCode(void *);
 U32 GetCurrentSMode(void);
+void boardReset(void);
 
-void aarch32_monitor(unsigned int lr)
+static void panic(const char *excName)
 {
-	U32 smccode = GetSMCCode((void *)lr);
-
-	if (smccode == 12) {
-		if (GetCPUID() > 0) {
-			__asm__ __volatile__("dmb sy");
-			__asm__ __volatile__("wfi");
-		} else {
-			printf("smc with suspend request code %d\r\nenter "
-			       "suspend...\r\n",
-			       smccode);
-			while (!DebugIsTXEmpty())
-				;
-			while (DebugIsBusy())
-				;
-
-			sleepMain();
-
-			printf("machine is resumed at mode 0x%x\r\n",
-			       GetCurrentSMode());
-			while (!DebugIsTXEmpty())
-				;
-			while (DebugIsBusy())
-				;
-		}
-	} else {
-		printf("unknown excption to Monitor mode\r\n");
-	}
+    printf("\r\n>> PANIC! <%s> exception on CPU%d level %d\r\n",
+            excName, GetCPUID(), GetCurrentSMode());
+    boardReset();
 }
+
+void undef_instr_handler(void)
+{
+    panic("undefined instruction");
+}
+
+void smc_handler(void)
+{
+    panic("smc");
+}
+
+void prefetch_abort_handler(void)
+{
+    panic("prefetch abort");
+}
+
+void data_abort_handler(void)
+{
+    panic("data abort");
+}
+
+void hyp_trap_handler(void)
+{
+    panic("hyp trap");
+}
+
+void irq_handler(void)
+{
+    panic("irq");
+}
+
+void fiq_handler(void)
+{
+    panic("fiq");
+}
+

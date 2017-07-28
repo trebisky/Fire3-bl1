@@ -19,7 +19,6 @@
 
 #include "aarch64_Vectors.inc"
 
-    .align 9, 0    // 2^9 = 512 bytes sector size
     // see reference-nsih/drone-sd-64.txt
     .word 0xE3A00103	// 0x000 : MOV R0, #0xC0000000
     .word 0xE3800A11	// 0x004 : ORR R0, R0, #0x11000

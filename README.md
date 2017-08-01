@@ -30,7 +30,30 @@ The command builds _out/bl1-drone.bin_ binary. This is the _bl1_ binary for Nano
 
 Like Linux on arm64, the _u-boot_ uses _device tree_, which must be built using _dtc_ script located in Linux kernel source tree. Path to the script must be on $PATH or the path must be provided in _make_ command line.
 
-To compile _u-boot_, go to _u-boot_ source dir and invoke:
+The u-boot performs booting according to their configuration specified in environment variables. Environment variables may control several aspects of u-boot behavior. For booting process two environment variables are important: _bootcmd_ and _bootargs_. The _bootcmd_ variable instructs u-boot how to boot Linux. The _bootargs_ variable contains Linux command line parameters.
+
+The environment variables may be provided to u-boot in two ways. Namely, it is possible to specify some defaults in u-boot configuration header file, _include/configs/s5p6818\_nanopim3.h_. The environment may be also embedded in SD card. Embedding environment in SD card needs a special tool. I think it is easier to modify configuration header to set proper environment. Environment must be modified, because with current defaults NanoPi u-boot will not boot but will wait for environment on USB port.
+
+So, before compilation please open _include/configs/s5p6818\_nanopim3.h_ file and modify two #define's: CONFIG\_BOOTCOMMAND and CONFIG\_BOOTARGS. The CONFIG\_BOOTARGS line may look like this:
+
+	#define CONFIG_BOOTARGS \
+		"initrd=0x49000000,0x400000 root=/dev/mmcblk1p1 console=tty1"
+
+If you want to communicate with Linux also over serial console, the line should look like below:
+
+	#define CONFIG_BOOTARGS \
+		"console=ttySAC0,115200n8 initrd=0x49000000,0x400000 root=/dev/mmcblk1p1 console=tty1"
+
+The CONFIG\_BOOTCOMMAND may look like below:
+
+	#define CONFIG_BOOTCOMMAND	\
+		"ext4load mmc 0:1 0x48000000 boot/Image; " \
+		"mw 0x49000000 0 0x400000; " \
+		"ext4load mmc 0:1 0x49000000 boot/initrd.img; " \
+		"ext4load mmc 0:1 0x4a000000 boot/s5p6818-nanopi-m3.dtb; " \
+		"booti 0x48000000 - 0x4a000000"
+
+When finished, the u-boot may be complied. Go to _u-boot_ main directory and invoke:
 
         make s5p6818_nanopim3_defconfig
         make ARCH=arm CROSS_COMPILE=/path/to/your/gcc-linaro/bin/aarch64-linux-gnu- DTC=/path/to/linux-nanopi-m3/scripts/dtc/dtc
@@ -68,6 +91,8 @@ The _u-boot_ must have NSIH header added before embed. This may be done using _n
 The _u-boot-nsih.bin_ should be embedded in the SD card at 32kB offset, i.e. from sector 64. With _dd_ command, it may be embedded as follows:
 
         dd if=u-boot-nsih.bin of=/dev/sdX seek=64
+
+### Debian bootstrap
 
 Next step is ext4 filesystem creation on the newly created partition. Invoke:
 
@@ -206,6 +231,25 @@ Debian installer configures a lot of things, including time zone, locale etc. Mo
         dpkg-reconfigure tzdata
 
 To configure locale, _locales_ package should be installed.
+
+
+### Wireless network setup
+
+There are two drivers working with the wifi chip. First one is native _brcmfmac_ driver. Second one is _bcmdhd_ driver ported from 3.x kernel. The second driver was ported by me because of some problems encountered by me with the native driver, but now the _brcmfmac_ driver seems to work well. Only one driver should be loaded, second one should be disabled (blacklist-ed) or not built at all.
+
+Both drivers need firmware. Linux image provided by FriendlyArm has the firmware in _/lib/firmware/ap6212_ directory. The best way is to copy the whole directory to the new board, exactly at the same location. After copy and load bcmdhd module the _wlan0_ device should appear. On the other hand, brcmfmac driver expects firmware in _/lib/firmware/brcm_ directory. For this driver symbolic links may be created, like below:
+
+		lrwxrwxrwx 1 root root 27 Jul  7 16:15 brcmfmac43430-sdio.bin -> ../ap6212/fw_bcm43438a0.bin
+		lrwxrwxrwx 1 root root 26 Jul  7 16:18 brcmfmac43430-sdio.txt -> ../ap6212/nvram_ap6212.txt
+
+
+The _wlan0_ device should become visible after _brcmfmac_ module load.
+
+
+### VPU - Video Processing Unit
+
+
+The board has also video processing unit (coda960) which allows to play video files with little CPU consumption. To utilize the VPU some userland tools are needed. Samsung Artik provides on github some GStreamer plugins which allow to play the video. They need some Nexell libraries whose are also available on github in the Samsung ARTIK repositories.
 
 
 Enjoy ;)

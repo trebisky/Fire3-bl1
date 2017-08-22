@@ -29,7 +29,6 @@ static unsigned psciFeatures(unsigned function)
 {
     unsigned result;
 
-    printf(">> psciFeatures: function=%x\r\n", function);
     switch( function ) {
     case 0x84000001:    // CPU_SUSPEND
     case 0xC4000001:
@@ -48,8 +47,6 @@ static unsigned bringCpuOn(unsigned long targetCpu, unsigned long entryPoint,
     unsigned cpuId = (targetCpu & 3) | (targetCpu & 0xff00 ? 0x4 : 0);
     void SubCPUJumpTo(U32 cpuId, unsigned jumpAddr);
 
-    printf(">> bringCpuOn: targetCpu=%x, entryPoint=%x, contextId=%x\r\n",
-            (unsigned)targetCpu, (unsigned)entryPoint, (unsigned)contextId);
     SubCPUJumpTo(cpuId, entryPoint);
     return PSCI_SUCCESS;
 }
@@ -67,7 +64,6 @@ void psciHandler(unsigned long *regs)
 {
     unsigned long result = 0;
 
-    printf(">>> in psciHandler: function=%x\r\n", regs[0]);
     switch( regs[0] ) {
     case 0x84000000:        // PSCI_VERSION
         result = 0x10001;   // version: 1.1

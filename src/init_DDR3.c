@@ -65,7 +65,7 @@ union DWtoB
 #endif
 
 extern inline void ResetCon(U32 devicenum, CBOOL en);
-extern inline void DMC_Delay(int milisecond);
+inline void DMC_Delay(int milisecond);
 
 struct phy_lock_info {
 	U32 val;

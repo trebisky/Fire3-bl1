@@ -35,6 +35,15 @@ void DMC_Delay(int milisecond);
 #define AXP_I2C_GPIO_GRP (-1)
 #define NXE2000_I2C_GPIO_GRP (-1)
 
+#ifdef NANOPI_PMIC_INIT
+#undef AXP_I2C_GPIO_GRP
+#define AXP_I2C_GPIO_GRP 		4  // E group
+#define AXP_I2C_SCL 			30
+#define AXP_I2C_SDA 			31
+#define AXP_I2C_SCL_ALT			1
+#define AXP_I2C_SDA_ALT			1
+#endif
+
 #ifdef DRONE_PMIC_INIT
 #undef AXP_I2C_GPIO_GRP
 #define AXP_I2C_GPIO_GRP 		3  // D group
@@ -274,8 +283,33 @@ static U8 nxe2000_get_dcdc_step(int want_vol)
 }
 #endif
 
+#ifdef NANOPI_PMIC_INIT
+static void PMIC_NanoPi(void)
+{
+	U8 data;
+
+	I2C_Init(AXP_I2C_GPIO_GRP, AXP_I2C_SCL, AXP_I2C_SDA,
+			AXP_I2C_SCL_ALT, AXP_I2C_SDA_ALT);
+
+	// Set DCDC4 and DCDC5 in PWM mode
+	I2C_Read(I2C_ADDR_AXP228, 0x80, &data, 1);
+	data = (data & 0x1F) | DCDC_SYS | DCDC_DDR;
+	I2C_Write(I2C_ADDR_AXP228, 0x80, &data, 1);
+
+	// Set voltage of DCDC4.
+	data = axp228_get_dcdc_step(AXP228_DEF_DDC4_VOL, AXP228_DEF_DDC234_VOL_STEP,
+			AXP228_DEF_DDC234_VOL_MIN, AXP228_DEF_DDC24_VOL_MAX);
+	I2C_Write(I2C_ADDR_AXP228, AXP228_REG_DC4VOL, &data, 1);
+
+	// Set voltage of DCDC5.
+	data = axp228_get_dcdc_step(AXP228_DEF_DDC5_VOL, AXP228_DEF_DDC5_VOL_STEP,
+			AXP228_DEF_DDC5_VOL_MIN, AXP228_DEF_DDC5_VOL_MAX);
+	I2C_Write(I2C_ADDR_AXP228, AXP228_REG_DC5VOL, &data, 1);
+}
+#endif // NANOPI
+
 #ifdef DRONE_PMIC_INIT
-inline void PMIC_Drone(void)
+static void PMIC_Drone(void)
 {
 	U8 pData[4];
 
@@ -577,6 +611,9 @@ void PMIC_RAPTOR(void)
 
 void initPMIC(void)
 {
+#ifdef NANOPI_PMIC_INIT
+	PMIC_NanoPi();
+#endif // NANOPI
 #ifdef DRONE_PMIC_INIT
 	PMIC_Drone();
 #endif // DRONE

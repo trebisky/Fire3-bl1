@@ -32,8 +32,6 @@ extern void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size);
 
 void ResetCon(U32 devicenum, CBOOL en);
 
-static NX_USB20OTG_APB_RegisterSet *const pUSB20OTGAPBReg =
-    (NX_USB20OTG_APB_RegisterSet *)PHY_BASEADDR_USB20OTG_MODULE_APB;
 static struct NX_USB_OTG_RegisterSet *const pUOReg =
     (struct NX_USB_OTG_RegisterSet *)PHY_BASEADDR_USB20OTG_MODULE_AHBS0;
 
@@ -474,7 +472,7 @@ static void header_check(USBBOOTSTATUS *pUSBBootStatus,
 	if (tbi->signature == HEADER_ID) { /* "NSIH" */
 		pUSBBootStatus->bHeaderReceived = CTRUE;
 		pUSBBootStatus->RxBuffAddr =
-			(U8 *)((U8 *)(tbi->loadaddr) + sizeof(*tbi));
+			(U8*)(unsigned long)tbi->loadaddr + sizeof(*tbi);
 		pUSBBootStatus->RxBuffAddr_save = pUSBBootStatus->RxBuffAddr;
 		pUSBBootStatus->iRxSize = //512 +	/* rsa header */
 			tbi->loadsize +
@@ -878,7 +876,9 @@ void post_process(USBBOOTSTATUS *pUSBBootStatus,
 
 CBOOL iUSBBOOT(struct NX_SecondBootInfo *pTBI)
 {
+#ifdef SYSLOG_ON
 	struct nx_tbbinfo *tbi = (struct nx_tbbinfo *)pTBI;
+#endif
 	USBBOOTSTATUS USBBootStatus;
 	USBBOOTSTATUS *pUSBBootStatus = &USBBootStatus;
 	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CTRUE);  // reset on

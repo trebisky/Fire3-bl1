@@ -1036,7 +1036,9 @@ static	CBOOL	SDMMCBOOT(SDXCBOOTSTATUS * pSDXCBootStatus,
 					pgSDXCReg[pSDXCBootStatus->SDPort];
 
 	struct nx_bootheader *ptbh = (struct nx_bootheader *)pTBI;
+#ifdef SECURE_ON
 	struct nx_bootheader *psbh = (struct nx_bootheader *)pSBI;
+#endif
 
 	if (CTRUE != NX_SDMMC_Open(pSDXCBootStatus)) {
 		printf("Cannot Detect SDMMC\r\n");
@@ -1097,7 +1099,7 @@ static	CBOOL	SDMMCBOOT(SDXCBOOTSTATUS * pSDXCBootStatus,
 	do {
 		U32 i;
 		U32 *src = (U32*)pTBI;
-		U32 *tb_load = (U32*)ptbh->tbbi.loadaddr;
+		U32 *tb_load = (U32*)(unsigned long)ptbh->tbbi.loadaddr;
 		U32 *dst = tb_load;
 
 		/* copy full struct nx_bootheader */
@@ -1114,7 +1116,7 @@ static	CBOOL	SDMMCBOOT(SDXCBOOTSTATUS * pSDXCBootStatus,
 			*dst++ = *src++;
 #endif
 	} while(0);
-	ptbh = (struct nx_bootheader *)ptbh->tbbi.loadaddr;
+	ptbh = (struct nx_bootheader*)(unsigned long)ptbh->tbbi.loadaddr;
 
 	ptbh->tbbi.loadsize += sizeof(struct nx_bootheader);
 	dev_msg("Load Addr :0x%08X,  Load Size :0x%08X,  Launch Addr :0x%08X\r\n",

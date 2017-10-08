@@ -47,6 +47,7 @@ static unsigned bringCpuOn(unsigned long targetCpu, unsigned long entryPoint,
     unsigned cpuId = (targetCpu & 3) | (targetCpu & 0xff00 ? 0x4 : 0);
     void SubCPUJumpTo(U32 cpuId, unsigned jumpAddr);
 
+	(void)contextId;
     SubCPUJumpTo(cpuId, entryPoint);
     return PSCI_SUCCESS;
 }

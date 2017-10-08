@@ -64,8 +64,8 @@ union DWtoB
 #define nop() __asm__ __volatile__("mov\tx0,x0\t\r\n nop\n\t");
 #endif
 
-extern inline void ResetCon(U32 devicenum, CBOOL en);
-inline void DMC_Delay(int milisecond);
+extern void ResetCon(U32 devicenum, CBOOL en);
+void DMC_Delay(int milisecond);
 
 struct phy_lock_info {
 	U32 val;

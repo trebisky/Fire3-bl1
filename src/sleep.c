@@ -37,7 +37,7 @@ extern U32 g_WR_vwmc;
 void dowakeup(void)
 {
 	unsigned int function, physical;
-	unsigned int signature, atf_signature, cal_crc, crc, size;
+	unsigned signature, atf_signature, crc, size;
 	void (*JumpNextBoot)(void) = 0;
 
 	/* for Kernel WakeUp */
@@ -73,6 +73,7 @@ void dowakeup(void)
 	} else if (ATF_SUSPEND_SIGNATURE == (atf_signature & 0xFFFFFF00)) {
 		/* Arm Trusted Firmware */
 #if 0
+		unsigned cal_crc;
 		struct nx_tbbinfo *header = (struct nx_tbbinfo*)ReadIO32(&pReg_Alive->ALIVESCRATCHVALUE2);
 		cal_crc = __calc_crc((void *)((MPTRS)(header->loadaddr + ATF_HEADER_SIZE)), header->loadsize - ATF_HEADER_SIZE);
 		printf("Calcurated CRC: 0x%08X, Normal CRC: 0x%08X \r\n", cal_crc, header->crc32);

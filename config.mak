@@ -184,7 +184,7 @@ ifeq ($(OPMODE) , aarch64)
 ASFLAG				+=	-march=$(ARCH) -mcpu=$(CPU)
 
 CFLAGS				+=	-mcmodel=small					\
-					-march=$(ARCH)
+					-march=$(ARCH) -mstrict-align
 endif
 
 ifeq ($(INITPMIC), YES)

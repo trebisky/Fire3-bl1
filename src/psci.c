@@ -66,6 +66,9 @@ void psciHandler(unsigned long *regs)
     unsigned long result = 0;
 
     switch( regs[0] ) {
+	case 0x80000000:		// SMC calling convention version
+		result = 0;			// version 1.0
+		break;
     case 0x84000000:        // PSCI_VERSION
         result = 0x10001;   // version: 1.1
         break;

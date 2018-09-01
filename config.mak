@@ -52,6 +52,7 @@ SUPPORT_SDMMC_BOOT		= y
 BOARD				= NANOPI
 
 # System Log Message
+#SYSLOG				= y
 SYSLOG				?= n
 
 # Secure Boot
@@ -84,7 +85,8 @@ endif
 ###########################################################################
 PROJECT_NAME		= $(CHIPNAME)_2ndboot_$(OPMODE)_$(MEMTYPE)_$(VERINFO)
 
-TARGET_NAME			= bl1-$(shell echo $(BOARD) | tr A-Z a-z)
+#TARGET_NAME			= bl1-$(shell echo $(BOARD) | tr A-Z a-z)
+TARGET_NAME			= bl1
 
 LDS_NAME			= peridot_2ndboot_$(OPMODE)
 

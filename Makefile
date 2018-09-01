@@ -14,6 +14,7 @@
  #
  # You should have received a copy of the GNU General Public License
  # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 include config.mak
 
 LDFLAGS		=	-Bstatic							\
@@ -77,6 +78,9 @@ $(DIR_OBJOUTPUT)/%.o: src/%.S
 
 
 all: mkobjdir $(SYS_OBJS_LIST) link bin
+
+install:
+	dd if=out/$(TARGET_NAME).bin of=/dev/sdf bs=512 seek=1 conv=fdatasync
 
 mkobjdir:
 ifeq ($(OS),Windows_NT)

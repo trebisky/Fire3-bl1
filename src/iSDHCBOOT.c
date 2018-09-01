@@ -1091,7 +1091,7 @@ static	CBOOL	SDMMCBOOT(SDXCBOOTSTATUS * pSDXCBootStatus,
 		Decrypt((U32 *)pTBI, (U32 *)pTBI, sizeof(struct nx_bootheader));
 
 	if (pTBI->SIGNATURE != HEADER_ID ) {
-		printf("SIGNATURE: 0x%08X \r\n3rd boot Sinature is wrong! SDMMC boot failure\r\n",
+		printf("SIGNATURE: 0x%08X \r\n3rd boot Signature is wrong! SDMMC boot failure\r\n",
 				pTBI->SIGNATURE);
 		return CFALSE;
 	}

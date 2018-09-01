@@ -19,6 +19,42 @@
 
 #include "aarch64_Vectors.inc"
 
+/* Note by tjt about some values below that I have modified.
+ *
+ * What is somewhat confusing is that some of these values are read
+ * by the on-chip loader to tell it what to do when loading this.
+ * Other values are read by this code to tell it how and what to load.
+ *
+ * -- Location 0x54
+ * Perhaps the most interesting value is at 0x54
+ * This contains a byte at 0x57 which tell this what mode to
+ * boot in.  I found this with the value 0x03, which tells is
+ * to boot from SDMMC - I change this value to 0x00 to make this
+ * boot from USB.
+ *
+ * -- Location 0x40
+ * Location 0x40 tells this thing (bl1) the offset to what
+ * it should load next from the SD card.
+ * This is of no importance when this does a USB boot.
+ * The value here was originally 0x8000
+ *  (which is a 64 sector offset, i.e. 32K)
+ * I changed this to 0x10200, which is a 129 sector offset.
+ * This gives 1 sector for a partition table (the on-chip loader ignores it).
+ * Then it allows 128 sectors for this thing (bl1), i.e. 64K
+ * This must fit into the 64K SRAM, so surely nothing bigger is needed.
+ * At this time, the size of bl1 is about 35K,
+ *  so the old 32K offset was probably broken anyway.
+ *
+ * -- Location 0x44
+ * This tells the on-chip loader the number of bytes to load,
+ *  i.e. the size of this thing.
+ *  This is 4*64K which is excessive, but works fine
+ *  and I have left it as-is.
+ *
+ * Note the nice jump to A64 mode coded below in addresses
+ *  0 to 0x3f
+ */
+
     // see reference-nsih/drone-sd-64.txt
     .word 0xE3A00103	// 0x000 : MOV R0, #0xC0000000
     .word 0xE3800A11	// 0x004 : ORR R0, R0, #0x11000
@@ -36,12 +72,16 @@
     .word 0xE58892AC	// 0x034 : STR R9, [R8, #0x2AC]
     .word 0xE320F003	// 0x038 : WFI				// core 0 will be reset when wfi
     .word 0xEAFFFFFE	// 0x03C : B .
-    .word 0x00008000	// 0x040 : Device Read Address from 2ndboot Device.
+
+//    .word 0x00008000	// 0x040 : Device Read Address from 2ndboot Device.
+    .word 0x00010200    // 0x040 : Device Read Address for next SD boot.
     .word 0x00040000	// 0x044 : Load Size for 2ndboot.
     .word 0xFFFF0000	// 0x048 : Load Address for 2ndboot.
     .word 0xFFFF0000	// 0x04C : Launch Address for 2ndboot.
     .word 0x00000000	// 0x050	[7:0] - Channel number
-    .word 0x03000000	// 0x054	Boot From SDMMC	[31:24] - 0: USB, 1: SPI, 2: NAND, 3:SDMMC, 4: SDFS
+    //    .word 0x03000000  // 0x054        Boot From SDMMC [31:24] - 0: USB, 1: SPI, 2: NAND, 3:SDMMC, 4: SDFS
+    .word 0x00000000    // 0x054       <-- set 0 so this will boot from USB 
+
     .word 0x00000000	// 0x058
     .word 0x100CC801	// 0x05C : PLL0		800MHz	P:3	M:200	S:1
     .word 0x100CC801	// 0x060 : PLL1		800MHz	P:3	M:200	S:1

@@ -25,7 +25,7 @@ SECTIONS
 {
 	.text 0x00000000FFFF0000 :
 	{
-		obj/startup_aarch64.o	(.text)
+/*		obj/startup_aarch64.o	(.text)		*/
 		*(.text)
 	}
 

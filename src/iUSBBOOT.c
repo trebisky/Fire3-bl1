@@ -592,10 +592,12 @@ static S32 nx_usb_set_init(USBBOOTSTATUS *pUSBBootStatus)
 	/* Set if Device is High speed or Full speed */
 	if (((status & 0x6) >> 1) == USB_HIGH) {
 		pUSBBootStatus->speed = USB_HIGH;
-		SYSMSG("High Speed Connected\r\n");
+		// SYSMSG("High Speed Connected\r\n");
+		printf("High Speed USB Connected\r\n");
 	} else if (((status & 0x6) >> 1) == USB_FULL) {
 		pUSBBootStatus->speed = USB_FULL;
-		SYSMSG("Full Speed Connected\r\n");
+		// SYSMSG("Full Speed Connected\r\n");
+		printf("Full Speed USB Connected\r\n");
 	} else {
 		printf("**** Error:Neither High_Speed nor Full_Speed\r\n");
 		return CFALSE;
@@ -876,9 +878,11 @@ void post_process(USBBOOTSTATUS *pUSBBootStatus,
 
 CBOOL iUSBBOOT(struct NX_SecondBootInfo *pTBI)
 {
-#ifdef SYSLOG_ON
+// #ifdef SYSLOG_ON
+// 	struct nx_tbbinfo *tbi = (struct nx_tbbinfo *)pTBI;
+// #endif
 	struct nx_tbbinfo *tbi = (struct nx_tbbinfo *)pTBI;
-#endif
+
 	USBBOOTSTATUS USBBootStatus;
 	USBBOOTSTATUS *pUSBBootStatus = &USBBootStatus;
 	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CTRUE);  // reset on
@@ -968,9 +972,15 @@ CBOOL iUSBBOOT(struct NX_SecondBootInfo *pTBI)
 	/* post process */
 	//post_process(pUSBBootStatus, pTBI);
 
-	SYSMSG("\r\n\nusb image download is done!\r\n\n");
+	// SYSMSG("\r\n\nusb image download is done!\r\n\n");
+	printf("\r\n\nusb image download is done!\r\n\n");
 
-	SYSMSG("USB Load Address = 0x%016X Launch Address = 0x%016X, size = %08X bytes\r\n",
+	// SYSMSG("USB Load Address = 0x%016X Launch Address = 0x%016X, size = %08X bytes\r\n",
+	//        (MPTRS)tbi->loadaddr,
+	//        (MPTRS)tbi->startaddr,
+	//        (int32_t)pUSBBootStatus->iRxSize_save);
+
+	printf("USB Load Address = 0x%08x\n\rLaunch Address = 0x%08x\r\nsize = %d bytes\r\n",
 	       (MPTRS)tbi->loadaddr,
 	       (MPTRS)tbi->startaddr,
 	       (int32_t)pUSBBootStatus->iRxSize_save);

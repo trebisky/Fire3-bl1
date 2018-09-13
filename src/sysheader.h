@@ -58,6 +58,9 @@
 //  Set DEBUG Macro
 //------------------------------------------------------------------------------
 
+/* tjt */
+// #define SYSLOG_ON	(1)
+
 #if defined(SYSLOG_ON)
 #define SYSMSG printf
 #else

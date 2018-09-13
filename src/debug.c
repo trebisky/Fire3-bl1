@@ -139,12 +139,27 @@ CBOOL DebugInit( U32 port )
 	return CTRUE;
 }
 
-void	DebugPutch( S8 ch )
+#define FIFO_FULL       0x01000000
+
+static void	DebugPutch_i ( S8 ch )
 {
-	const U32 TX_FIFO_NONEMPTY	= 0x1ff0000;
+	// Changed by tjt to get some use from the FIFO
+	// const U32 TX_FIFO_NONEMPTY	= 0x1ff0000;
+	const U32 TX_FIFO_NONEMPTY	= FIFO_FULL;
+
 	while( pReg_Uart->FSTATUS & TX_FIFO_NONEMPTY )	{ ; }
 	pReg_Uart->THR = (U32)ch;
 	while( pReg_Uart->FSTATUS & TX_FIFO_NONEMPTY )	{ ; }
+}
+
+/* tjt - rather than require \n\r everywhere,
+ * take care of this here.
+ */
+void	DebugPutch( S8 ch )
+{
+	if ( ch == '\r' ) return;
+	DebugPutch_i ( ch );
+	if ( ch == '\n' ) DebugPutch_i ( '\r' );
 }
 
 CBOOL	DebugIsUartTxDone(void)

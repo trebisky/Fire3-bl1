@@ -36,7 +36,7 @@ void sync_c_handler_EL3(unsigned exc, unsigned esr, unsigned long *regs)
             if( excSyndrome == 0 ) {
                 psciHandler(regs);
                 return;
-            }else if( excSyndrome == 0x123 ) {
+            } else if( excSyndrome == 0x123 ) {
                 putchar(regs[0]);
                 return;
             }

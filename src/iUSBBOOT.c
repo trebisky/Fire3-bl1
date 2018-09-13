@@ -470,15 +470,28 @@ static void header_check(USBBOOTSTATUS *pUSBBootStatus,
 		Decrypt((U32 *)tbi, (U32 *)tbi, sizeof(*tbi));
 
 	if (tbi->signature == HEADER_ID) { /* "NSIH" */
+                U32 *src = (U32 *) tbi;
+                U32 *dst = (U32 *)(unsigned long) tbi->loadaddr;
+		U32 i;
+
 		pUSBBootStatus->bHeaderReceived = CTRUE;
 		pUSBBootStatus->RxBuffAddr =
 			(U8*)(unsigned long)tbi->loadaddr + sizeof(*tbi);
+
+		/* tjt - This code used to skip right over the header and never
+		 * copy it to the load address.  We fix that here.
+		 * 9-13-2018
+		 */
+                for (i = 0; i < sizeof(struct nx_bootheader)/sizeof(U32); i++)
+                        *dst++ = *src++;
+
 		pUSBBootStatus->RxBuffAddr_save = pUSBBootStatus->RxBuffAddr;
 		pUSBBootStatus->iRxSize = //512 +	/* rsa header */
 			tbi->loadsize +
 			tbi->dbi[0].usbbi.split_size +
 			tbi->dbi[1].usbbi.split_size;
 		pUSBBootStatus->iRxSize_save = pUSBBootStatus->iRxSize;
+
 		SYSMSG("USB Load Address = 0x%016X Launch "
 		       "Address = 0x%016X, size = %08X bytes\r\n",
 		       (MPTRS)tbi->loadaddr,
@@ -494,11 +507,14 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 			       struct NX_SecondBootInfo *pTBI,
 			       U32 fifo_cnt_byte)
 {
+
 	/* get header */
 	if (CTRUE != pUSBBootStatus->bHeaderReceived) {
+// printf ( "Bulkout, %d bytes (header) \n", fifo_cnt_byte );
 		struct nx_bootheader *ptbh = (struct nx_bootheader *)pTBI;
 		U32 *pdwBuffer = (U32 *)pTBI;
 
+		// printf ( "Read header to %08x\n", (U8 *)&pdwBuffer[pUSBBootStatus->iRxHeaderSize / 4] );
 		nx_usb_read_out_fifo(BULK_OUT_EP,
 			(U8 *)&pdwBuffer[pUSBBootStatus->iRxHeaderSize / 4],
 			fifo_cnt_byte);
@@ -506,18 +522,23 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 		if ((fifo_cnt_byte & 3) == 0) {
 			pUSBBootStatus->iRxHeaderSize += fifo_cnt_byte;
 		} else {
-			printf("ERROR : Header Packet Size must be aligned on "
-			       "32-bits.\r\n");
+			printf("ERROR : Header Packet Size must be aligned on 32-bits.\n");
 			pUOReg->DCSR.DEPOR[BULK_OUT_EP].DOEPCTL |= DEPCTL_STALL;
 		}
 
-		if (512 <= pUSBBootStatus->iRxHeaderSize) /* why 512 <= ??? */
+// printf ( "Bulkout, header size: %d bytes\n", pUSBBootStatus->iRxHeaderSize );
+
+		if (512 <= pUSBBootStatus->iRxHeaderSize) {
+// printf ( "Bulkout, header check\n" );
 			/* mark header received in function */
 			header_check(pUSBBootStatus, ptbh);
+		}
 	/* get body */
 	} else {
+// printf ( "Bulkout, %d bytes (body) \n", fifo_cnt_byte );
 		NX_ASSERT((pUSBBootStatus->iRxSize) > 0);
 		NX_ASSERT(0 == ((MPTRS)pUSBBootStatus->RxBuffAddr & 3));
+		// printf ( "Read body to %08x\n", (U8 *)pUSBBootStatus->RxBuffAddr );
 		nx_usb_read_out_fifo(BULK_OUT_EP,
 				     (U8 *)pUSBBootStatus->RxBuffAddr,
 				     fifo_cnt_byte);
@@ -593,13 +614,13 @@ static S32 nx_usb_set_init(USBBOOTSTATUS *pUSBBootStatus)
 	if (((status & 0x6) >> 1) == USB_HIGH) {
 		pUSBBootStatus->speed = USB_HIGH;
 		// SYSMSG("High Speed Connected\r\n");
-		printf("High Speed USB Connected\r\n");
+		printf("High Speed USB Connected\n");
 	} else if (((status & 0x6) >> 1) == USB_FULL) {
 		pUSBBootStatus->speed = USB_FULL;
 		// SYSMSG("Full Speed Connected\r\n");
-		printf("Full Speed USB Connected\r\n");
+		printf("Full Speed USB Connected\n");
 	} else {
-		printf("**** Error:Neither High_Speed nor Full_Speed\r\n");
+		printf("**** Error:Neither High_Speed nor Full_Speed\n");
 		return CFALSE;
 	}
 
@@ -783,6 +804,7 @@ static void nx_udc_int_hndlr(USBBOOTSTATUS *pUSBBootStatus,
 	}
 
 	if (int_status & INT_ENUMDONE) {
+	    /* tjt - for some reason we see this twice */
 		dev_msg("INT_ENUMDONE :");
 
 		tmp = nx_usb_set_init(pUSBBootStatus);
@@ -820,6 +842,7 @@ static void nx_udc_int_hndlr(USBBOOTSTATUS *pUSBBootStatus,
 	}
 	pUOReg->GCSR.GINTSTS = int_status; /* Interrupt Clear */
 }
+
 void udelay(U32 utime)
 {
 	register volatile U32 i;
@@ -881,7 +904,10 @@ CBOOL iUSBBOOT(struct NX_SecondBootInfo *pTBI)
 // #ifdef SYSLOG_ON
 // 	struct nx_tbbinfo *tbi = (struct nx_tbbinfo *)pTBI;
 // #endif
+// tjt
 	struct nx_tbbinfo *tbi = (struct nx_tbbinfo *)pTBI;
+	// int i;
+	// unsigned int *lp;
 
 	USBBOOTSTATUS USBBootStatus;
 	USBBOOTSTATUS *pUSBBootStatus = &USBBootStatus;
@@ -951,15 +977,26 @@ CBOOL iUSBBOOT(struct NX_SecondBootInfo *pTBI)
 
 	SYSMSG("USB Boot Ready!\r\n");
 
+#ifdef notdef
+	/* tjt */
+	/* This exposed the bug where the header was not
+	 * being copied */
+	lp = (unsigned int *) 0x40000000;
+	for ( i=0; i<256; i++ ) {
+	    *lp++ = 0xaa00aa00;
+	}
+#endif
+
+	/* Loops here while downloading */
 	pUSBBootStatus->bDownLoading = CTRUE;
 	while (pUSBBootStatus->bDownLoading) {
-		if (pUOReg->GCSR.GINTSTS &
-		    (WkUpInt | OEPInt | IEPInt | EnumDone | USBRst | USBSusp |
-		     RXFLvl)) {
-			nx_udc_int_hndlr(pUSBBootStatus, pTBI);
-			pUOReg->GCSR.GINTSTS = 0xFFFFFFFF;
-		}
+	    if (pUOReg->GCSR.GINTSTS &
+		(WkUpInt | OEPInt | IEPInt | EnumDone | USBRst | USBSusp | RXFLvl)) {
+		    nx_udc_int_hndlr(pUSBBootStatus, pTBI);
+		    pUOReg->GCSR.GINTSTS = 0xFFFFFFFF;
+	    }
 	}
+
 	/* usb core soft reset */
 	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
 	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE));
@@ -973,17 +1010,19 @@ CBOOL iUSBBOOT(struct NX_SecondBootInfo *pTBI)
 	//post_process(pUSBBootStatus, pTBI);
 
 	// SYSMSG("\r\n\nusb image download is done!\r\n\n");
-	printf("\r\n\nusb image download is done!\r\n\n");
+	printf("\n\nusb image download is done!\n\n");
 
 	// SYSMSG("USB Load Address = 0x%016X Launch Address = 0x%016X, size = %08X bytes\r\n",
 	//        (MPTRS)tbi->loadaddr,
 	//        (MPTRS)tbi->startaddr,
 	//        (int32_t)pUSBBootStatus->iRxSize_save);
 
-	printf("USB Load Address = 0x%08x\n\rLaunch Address = 0x%08x\r\nsize = %d bytes\r\n",
+	printf("USB Load Address = 0x%08x\nLaunch Address = 0x%08x\nsize = %d bytes\n",
 	       (MPTRS)tbi->loadaddr,
 	       (MPTRS)tbi->startaddr,
 	       (int32_t)pUSBBootStatus->iRxSize_save);
 
 	return CTRUE;
 }
+
+/* THE END */

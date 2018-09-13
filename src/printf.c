@@ -41,6 +41,9 @@
 	replace outbyte(c) by your own function call.
 
 #define putchar(c) outbyte(c)
+
+	Note: a macro in printf.h routes puchar
+	to the routine DebugPutch()
 */
 
 #include <stdarg.h>

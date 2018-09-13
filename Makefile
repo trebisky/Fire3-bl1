@@ -82,6 +82,9 @@ all: bl1-usb.bin bl1-sd.bin
 install: bl1-usb.bin
 	dd if=bl1-usb.bin of=/dev/sdf bs=512 seek=1 conv=fdatasync
 
+usb: bl1-usb.bin
+	usb_loader bl1-usb.bin
+
 ###################################################################################################
 
 $(DIR_OBJOUTPUT)/startup_sd.o: src/startup_$(OPMODE).S

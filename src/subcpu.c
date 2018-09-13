@@ -136,9 +136,11 @@ void SubCPUBoot(U32 CPUID)
 //------------------------------------------------------------------------------
 CBOOL SubCPUBringUp(U32 CPUID)
 {
+#if (MULTICORE_BRING_UP == 1)
 	register struct NX_SubCPUBringUpInfo *pCPUStartInfo =
 	    (struct NX_SubCPUBringUpInfo *)CPU_ALIVE_FLAG_ADDR;
 	S32 CPUNumber, retry = 0;
+#endif
 	S32 result = CPUID;
 
 	WriteIO32(&pReg_GIC400->GICC.CTLR, 0x07); // enable cpu interface

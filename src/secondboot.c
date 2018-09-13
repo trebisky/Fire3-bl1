@@ -151,10 +151,15 @@ void initCCI400(void)
 struct NX_CLKPWR_RegisterSet *const clkpwr;
 
 //------------------------------------------------------------------------------
-void BootMain(U32 CPUID)
+#if (MULTICORE_BRING_UP == 1)
+void BootMain ( U32 CPUID )
+#else
+void BootMain ( void )
+#endif
 {
 	struct NX_SecondBootInfo TBI;
 	struct NX_SecondBootInfo *pTBI = &TBI; // third boot info
+
 	CBOOL Result = CFALSE;
 	register volatile U32 temp;
 	U32 signature, isResume = 0;
@@ -403,24 +408,145 @@ void BootMain(U32 CPUID)
 	//		   (unsigned int)pTBI->DBI.SDMMCBI.CRC32);
 #endif
 	if (Result) {
+		void SwitchToEL2(void);
+
+#ifdef notdef
+		/* tjt */
+		void my_test ( int * );
+		void my_dump ( unsigned long *, int );
+		void my_print ( char * );
+		static long lbuf[7];
+		int *ip;
+		void (*xLaunch)();
+		unsigned long *xptr;
+#endif
+
+		/* This is the location of the header from the file we are booting. */
 		struct nx_tbbinfo *tbi = (struct nx_tbbinfo *)&TBI;
 		void (*pLaunch)() = (void (*)())((long)tbi->startaddr);
-        void SwitchToEL2(void);
+		// xLaunch = pLaunch;
+		// xptr = (unsigned long *) pLaunch;
 
-		SYSMSG(" Image Loading Done!\r\n");
+		SYSMSG(" Image Loading Done!\n");
+
+		printf ( "bl1, image loaded, launching to 0x%08x\n", (MPTRS)pLaunch);
+
 #ifdef aarch64
-	    SwitchToEL2();
+		SwitchToEL2();
 #endif
-		SYSMSG("Launch to 0x%08X\r\n", (MPTRS)pLaunch);
-		temp = 0x10000000;
 
-		while (!DebugIsUartTxDone() && temp--);
-		pLaunch(0, 4330);
+		SYSMSG("Launch to 0x%08X\n", (MPTRS)pLaunch);
+
+		/* Wait for output to clear uart */
+		temp = 0x10000000;
+		while (!DebugIsUartTxDone() && temp--)
+		    ;
+
+#ifdef notdef
+		printf ( "internal buffer for launch at: %08x\n", &lbuf[0] );
+		my_print ( "Launch 1\n" );
+
+		lbuf[0] = 0xd65f03c0;
+		my_print ( "Launch 1b\n" );
+		pLaunch = (void (*)()) &lbuf[0];
+		my_print ( "Launch 1c\n" );
+		pLaunch ();
+
+		my_print ( "Launch 2\n" );
+
+		ip = (int *) 0x50000000;
+		*ip = 0xd65f03c0;
+		pLaunch = (void (*)()) ip;
+		pLaunch ();
+
+		my_dump ( xptr, 4 );
+
+		my_print ( "Launch for real ...\n" );
+#endif
+
+		// Heaven knows what these arguments are for */
+		// xLaunch(0, 4330);
+		// pLaunch(0, 4330);
+		pLaunch ();
+
+		printf ( "Back in the bootloader (bl1)\n" );
+#ifdef notdef
+		my_print ( "Launch DONE\n" );
+		my_test ( (int *) pLaunch );
+		for ( ;; ) ;
+#endif
 	}
 
-	printf(" Image Loading Failure Try to USB boot\r\n");
+	printf(" Image Loading Failure Try to USB boot\n");
+
 	temp = 0x10000000;
-	while (!DebugIsUartTxDone() && temp--);
+	while (!DebugIsUartTxDone() && temp--)
+	    ;
+
 	RomUSBBoot((U32)0x0000009C);
-	while (1);
+	while (1)
+	    ;
 }
+/* End of BootMain */
+
+#ifdef notdef
+void
+my_print ( char *msg )
+{
+	volatile int tmo;
+
+	printf ( msg );
+	tmo = 0x10000000;
+	while (!DebugIsUartTxDone() && tmo--)
+	    ;
+
+}
+
+void
+my_dump ( unsigned long *lp, int count )
+{
+	int i;
+
+	for ( i=0; i< count; i++ ) {
+	    printf ( "%08x = %08x\n\r", lp, *lp );
+	    lp++;
+	}
+}
+
+static void mdelay ( int n )
+{
+	volatile int i;
+	volatile int k;
+
+	for ( i=0; i<n; i++ )
+	    for ( k=0; k<2400; k++ )
+		;
+}
+
+/* TJT */
+void
+my_test ( int *p )
+{
+	// unsigned long *p = (unsigned long *) 0x40000000;
+	unsigned long val;
+	int t;
+
+	printf ( "My test at address: %08x\n", p );
+
+	val = *p;
+	printf ( "My test reads: %08x\n", val );
+	*p = 0;
+	val = *p;
+	printf ( "My test reads: %08x\n", val );
+	*p = 0xffffffff;
+	val = *p;
+	printf ( "My test reads: %08x\n", val );
+
+	for ( t=0;; t++ ) {
+	    printf ( "Tick %d\n", t );
+	    mdelay ( 1000 );
+	}
+}
+#endif
+
+/* THE END */

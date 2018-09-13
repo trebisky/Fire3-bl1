@@ -1028,6 +1028,7 @@ End:
 
 //------------------------------------------------------------------------------
 extern void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size);
+
 static	CBOOL	SDMMCBOOT(SDXCBOOTSTATUS * pSDXCBootStatus,
 		struct NX_SecondBootInfo * pTBI )//U32 option )
 {
@@ -1116,10 +1117,17 @@ static	CBOOL	SDMMCBOOT(SDXCBOOTSTATUS * pSDXCBootStatus,
 			*dst++ = *src++;
 #endif
 	} while(0);
+
 	ptbh = (struct nx_bootheader*)(unsigned long)ptbh->tbbi.loadaddr;
 
 	ptbh->tbbi.loadsize += sizeof(struct nx_bootheader);
 	dev_msg("Load Addr :0x%08X,  Load Size :0x%08X,  Launch Addr :0x%08X\r\n",
+			(uint32_t)ptbh->tbbi.loadaddr,
+			(uint32_t)ptbh->tbbi.loadsize,
+			(uint32_t)ptbh->tbbi.startaddr);
+
+	/* tjt */
+	printf ("Load to: 0x%08x\r\nLoad Size: %d\r\nLaunch Addr :0x%08x\r\n",
 			(uint32_t)ptbh->tbbi.loadaddr,
 			(uint32_t)ptbh->tbbi.loadsize,
 			(uint32_t)ptbh->tbbi.startaddr);
